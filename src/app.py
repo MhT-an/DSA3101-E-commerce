@@ -6,8 +6,8 @@ import webbrowser
 import threading
 import os
 
-conversion_funnel = pd.read_parquet('conversion_funnel.parquet')
-channel_conversion_rate = pd.read_parquet('channel_conversion_rate.parquet')
+conversion_funnel = pd.read_parquet('/data/conversion_funnel.parquet')
+channel_conversion_rate = pd.read_parquet('/data/channel_conversion_rate.parquet')
 
 external_stylesheets = [
     {
