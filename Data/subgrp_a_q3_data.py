@@ -116,4 +116,4 @@ if __name__ == "__main__":
     '''
     result = client.query(query).result().to_dataframe()
     result = clean_categories(result, 'product_category')
-    result.to_parquet('data/marketing_channel_metrics.parquet')
+    result.to_parquet('/data/marketing_channel_metrics.parquet')

@@ -6,16 +6,31 @@ services:
       context: .
       dockerfile: Data/Dockerfile
     command: >
-      bash -c "for file in ../scripts/*.py; do
+      bash -c "for file in /app/Data/*.py; do
                   echo 'Processing $file...';
                   python $file;
                   echo 'Finished $file';
-                done"
+                done && cp /app/Data/* /data"
     volumes:
-      - ./Data:/scripts           ### Python scripts go here
+      - ./Data:/app/Data           ### Python scripts go here
       - data:/data                   ### csv go here
-      - ./requirements.txt:/scripts/requirements.txt
-    working_dir: /data
+      - ./requirements.txt:/app/requirements.txt
+    healthcheck:
+      test: >
+        bash -c "
+          FILE_COUNT=$(ls /data | wc -l);
+          if [ $FILE_COUNT -eq 19 ]; then
+            echo 'All files written';
+            exit 0;
+          else
+            echo 'Waiting for all files to be written';
+            exit 1;
+          fi
+        "
+      interval: 30s     # Check every 30 seconds
+      timeout: 10s      # Timeout for each check
+      retries: 5        # Retry 5 times before marking as unhealthy
+      start_period: 30s # Wait 30 seconds before the first check
 
     
 
@@ -33,7 +48,8 @@ services:
       find /project/Subgroup_A /project/Subgroup_B -type f -name "*.ipynb" 
       -exec jupyter nbconvert --to notebook --execute --inplace {} \;
     depends_on:
-      - query-service
+      query-service:
+        condition: service_healthy
 
   src-service:
     build:
@@ -51,7 +67,8 @@ services:
       - "8050:8050"
     command: python app.py
     depends_on:
-     - query-service
+     query-service:
+        condition: service_healthy
 
 volumes:
   data:

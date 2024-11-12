@@ -315,7 +315,7 @@ if __name__ == "__main__":
     GROUP BY
     continent, subcontinent, country
     '''
-    by_region = client.query(query).result().to_arrow()
+    by_region = client.query(query).result().to_dataframe()
     query_dict['by_region'] = by_region
 
     query = '''

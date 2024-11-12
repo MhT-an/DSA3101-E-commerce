@@ -53,7 +53,7 @@ if __name__ == "__main__":
         );
     '''
     result = client.query(query).result().to_arrow()
-    pq.write_table(result, 'aov_conversion.parquet')
+    pq.write_table(result, '/data/aov_conversion.parquet')
 
     query = '''
     SELECT
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     '''
 
     result = client.query(query).result().to_arrow()
-    pq.write_table(result, 'marketing_metrics.parquet')
+    pq.write_table(result, '/data/marketing_metrics.parquet')
 
     query = '''
     SELECT
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     res2 = client.query(query).result().to_dataframe()
     res2['date'] = pd.to_datetime(res2['date'])
-    res2.to_parquet('return_rate_by_campaign.parquet')
+    res2.to_parquet('/data/return_rate_by_campaign.parquet')
 
     query = '''
     WITH FirstVisit AS (
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     result = result.sort_values(by='ratio', ascending=False)
     result = result.reset_index()
     result.columns = ['campaign', 'new_customers', 'returning_customers', 'ratio']
-    result.to_parquet('new_customer_by_campaign.parquet')
+    result.to_parquet('/data/new_customer_by_campaign.parquet')
 
     query = '''
     WITH campaign_metrics AS (
@@ -220,4 +220,4 @@ if __name__ == "__main__":
     '''
 
     result = client.query(query).result().to_arrow()
-    pq.write_table(result, 'data/campaign_info.parquet')
+    pq.write_table(result, '/data/campaign_info.parquet')
