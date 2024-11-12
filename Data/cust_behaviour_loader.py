@@ -28,7 +28,7 @@ client = bigquery.Client(credentials= credentials,project=os.getenv("PROJ_ID"))
 
 def write_csv(my_dictionary):
     for key in my_dictionary:
-        path = f'{key}.parquet'
+        path = f'/data/{key}.parquet'
         my_dictionary[key].to_parquet(path)
         print(f'Completed {path}')
 

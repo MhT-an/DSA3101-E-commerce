@@ -220,4 +220,4 @@ if __name__ == "__main__":
     '''
 
     result = client.query(query).result().to_arrow()
-    pq.write_table(result, 'campaign_info.parquet')
+    pq.write_table(result, 'data/campaign_info.parquet')
