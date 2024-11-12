@@ -5,16 +5,14 @@ services:
     build:
       context: .
       dockerfile: Data/Dockerfile
-    command: >
-      bash -c "for file in /app/Data/*.py; do
-                  echo 'Processing $file...';
-                  python $file;
-                  echo 'Finished $file';
-                done && cp /app/Data/* /data"
+    working_dir: /app
     volumes:
       - ./Data:/app/Data           ### Python scripts go here
       - data:/data                   ### csv go here
-      - ./requirements.txt:/app/requirements.txt
+      - ./Data/requirements.txt:/app/requirements.txt
+    command: >
+      bash -c 'echo "Current working directory: $(pwd)"; ls /app/Data; find /app/Data -name "*.py" 
+      | while IFS= read -r file; do echo "Running $file"; done'
     healthcheck:
       test: >
         bash -c "
@@ -24,8 +22,9 @@ services:
             exit 0;
           else
             echo 'Waiting for all files to be written';
-            exit 1;
+            sleep 30;
           fi
+          done
         "
       interval: 30s     # Check every 30 seconds
       timeout: 10s      # Timeout for each check
