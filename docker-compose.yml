@@ -11,13 +11,13 @@ services:
       - data:/data                   ### csv go here
       - ./Data/requirements.txt:/app/requirements.txt
     command: >
-      bash -c 'echo "Current working directory: $(pwd)"; ls /app/Data; find /app/Data -name "*.py" 
-      | while IFS= read -r file; do echo "Running $file"; done'
+      bash -c 'cd Data/ && python app_data.py & python cust_behaviour_loader.py & 
+        kaggle_data.py & python subgrp_a_q3_data.py & python subgrp_a_q3b_data.py & python uci_data.py'
     healthcheck:
       test: >
         bash -c "
           FILE_COUNT=$(ls /data | wc -l);
-          if [ $FILE_COUNT -eq 19 ]; then
+          if [ $FILE_COUNT -eq 21 ]; then
             echo 'All files written';
             exit 0;
           else
