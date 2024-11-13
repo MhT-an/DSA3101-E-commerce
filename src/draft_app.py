@@ -4,12 +4,29 @@ import plotly.express as px
 import plotly.graph_objects as go
 import threading
 import webbrowser
+import requests
+import certifi
+from io import StringIO
 
 from data_utils import load_data, get_stockcode_options, update_forecast, generate_peak_order_figures, load_and_process_data, generate_insights_figures
 
 # Load and prepare data
-conversion_funnel = pd.read_parquet('conversion_funnel.parquet')
-channel_conversion_rate = pd.read_parquet('channel_conversion_rate.parquet')
+def data_loader(gd_link):
+    # Define the Google Drive link and convert it to a direct download link
+    csv_url = gd_link
+    file_id = csv_url.split('/')[-2]
+    dwn_url = f'https://drive.google.com/uc?id={file_id}'
+
+    # Get the CSV data with SSL verification
+    response = requests.get(dwn_url, verify=certifi.where()).text
+
+    # Load the CSV content directly into a pandas DataFrame without saving it
+    csv_raw = StringIO(response)
+    data = pd.read_csv(csv_raw)
+    return data
+
+conversion_funnel = data_loader('https://drive.google.com/file/d/1LUuFUO_tcMaedCUkD1yu2LnI8qNoUrty/view?usp=sharing')
+channel_conversion_rate = data_loader('https://drive.google.com/file/d/1Qb-sEYHh88WTyIT_vls4vioCuAXt-Vm0/view?usp=sharing')
 data = load_data()
 data2 = load_and_process_data()
 
@@ -72,7 +89,6 @@ app.layout = html.Div([
         dcc.Tabs(id="tabs", value="tab-1", vertical=True, children=[
             dcc.Tab(label="Conversion Funnel", value="tab-1"),
             dcc.Tab(label="Conversion Rate by Channel", value="tab-2"),
-            dcc.Tab(label="Monthly Churn Rate by Country", value="tab-3"),
             dcc.Tab(label="Optimising Inventory Levels", value="tab-4"),
             dcc.Tab(label="Demand & Competition", value="tab-5"),
             dcc.Tab(label="Peak Order Placement Periods", value="tab-6")
@@ -114,17 +130,6 @@ def render_content(tab):
             values='total_conversions',
             color='channel',
             title='Conversions by Channel & Category'
-        )
-        return html.Div([dcc.Graph(figure=fig)])
-
-    elif tab == "tab-3":
-        fig = px.choropleth(
-            country_churn,
-            locations="Country",
-            locationmode="country names",
-            color="ChurnRate",
-            title="Churn Rate by Country",
-            color_continuous_scale="Reds"
         )
         return html.Div([dcc.Graph(figure=fig)])
     
