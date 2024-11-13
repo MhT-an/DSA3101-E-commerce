@@ -4,58 +4,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 import threading
 import webbrowser
-import requests
-import certifi
-from io import StringIO
-from ucimlrepo import fetch_ucirepo
 
-from data_utils import load_data, get_stockcode_options, update_forecast, generate_peak_order_figures, load_and_process_data, generate_insights_figures
+from data_utils import load_data, data_loader, get_stockcode_options, update_forecast, generate_peak_order_figures, load_and_process_data, generate_insights_figures
 
 # Load and prepare data
-def data_loader(gd_link):
-    # Define the Google Drive link and convert it to a direct download link
-    csv_url = gd_link
-    file_id = csv_url.split('/')[-2]
-    dwn_url = f'https://drive.google.com/uc?id={file_id}'
-
-    # Get the CSV data with SSL verification
-    response = requests.get(dwn_url, verify=certifi.where()).text
-
-    # Load the CSV content directly into a pandas DataFrame without saving it
-    csv_raw = StringIO(response)
-    data = pd.read_csv(csv_raw)
-    return data
-
 channel_conversion_rate = data_loader('https://drive.google.com/file/d/1H708cwxwYSl4FrYdxOiU6wUJQ3U4xr3W/view?usp=sharing')
+channel_conversion_rate['main_category'] = channel_conversion_rate['main_category'].fillna('Other')
 conversion_funnel = data_loader('https://drive.google.com/file/d/1hUIjB77ZUI_Vmn4lKyCEilfS6WkLNRRr/view?usp=sharing')
 data = load_data()
 data2 = load_and_process_data()
 
-# Function to process data for churn rate
-def load_churn_data():
-    online_retail = fetch_ucirepo(id=352).data.original
-    online_retail['InvoiceDate'] = pd.to_datetime(online_retail['InvoiceDate'])
-    online_retail['Country'] = online_retail['Country'].fillna('Unknown')
-    
-    # Sort by customer and invoice date for churn calculations
-    online_retail = online_retail.sort_values(by=['CustomerID', 'InvoiceDate'])
-    online_retail['NextPurchaseDate'] = online_retail.groupby('CustomerID')['InvoiceDate'].shift(-1)
-    online_retail['DaysSinceLastPurchase'] = (online_retail['NextPurchaseDate'] - online_retail['InvoiceDate']).dt.days
-    online_retail['YearMonth'] = online_retail['InvoiceDate'].dt.to_period('M')
-    
-    # Define churned customers (no purchase within 30 days)
-    churned = online_retail[online_retail['DaysSinceLastPurchase'] > 30]
-    
-    # Monthly churn rate for each country
-    monthly_churn_country = (
-        churned.groupby(['YearMonth', 'Country']).size() / online_retail.groupby(['YearMonth', 'Country']).size()
-    ).reset_index().rename(columns={0: 'ChurnRate'})
-    monthly_churn_country['YearMonth'] = monthly_churn_country['YearMonth'].dt.to_timestamp()
-    
-    return monthly_churn_country
-
-# Load churn data
-country_churn = load_churn_data()
 
 # Stylesheets for external fonts and styles
 external_stylesheets = [
@@ -90,9 +48,9 @@ app.layout = html.Div([
         dcc.Tabs(id="tabs", value="tab-1", vertical=True, children=[
             dcc.Tab(label="Conversion Funnel", value="tab-1"),
             dcc.Tab(label="Conversion Rate by Channel", value="tab-2"),
-            dcc.Tab(label="Optimising Inventory Levels", value="tab-4"),
-            dcc.Tab(label="Demand & Competition", value="tab-5"),
-            dcc.Tab(label="Peak Order Placement Periods", value="tab-6")
+            dcc.Tab(label="Optimising Inventory Levels", value="tab-3"),
+            dcc.Tab(label="Demand & Competition", value="tab-4"),
+            dcc.Tab(label="Peak Order Placement Periods", value="tab-5")
         ], style={"display": "flex", "flexDirection": "column", "width": "15%", "height": "100vh"}),
     ], style={"float": "left"}),
     
@@ -125,7 +83,6 @@ def render_content(tab):
         return html.Div([dcc.Graph(figure=funnel_graph)])
 
     elif tab == "tab-2":
-        channel_conversion_rate['main_category'] = channel_conversion_rate['main_category'].fillna('Other')
         fig = px.sunburst(
             channel_conversion_rate,
             path=['channel', 'main_category'],
@@ -135,21 +92,21 @@ def render_content(tab):
         )
         return html.Div([dcc.Graph(figure=fig)])
     
-    elif tab == "tab-4":
+    elif tab == "tab-3":
         return html.Div([
             html.Label("Select StockCode:"),
             dcc.Dropdown(id="stockcode-dropdown", options=get_stockcode_options(), style={'width': '50%'}),
             html.Div(id="forecast-content")
         ])
     
-    elif tab == "tab-5":
+    elif tab == "tab-4":
         category_options = [{'label': cat, 'value': cat} for cat in data2['Category'].unique() if pd.notnull(cat)]
         return html.Div([
             dcc.Dropdown(id="category-dropdown", options=category_options, placeholder="Select a Category"),
             html.Div(id="insights-content")
         ])
     
-    elif tab == "tab-6":
+    elif tab == "tab-5":
         hour_fig, day_fig, month_fig = generate_peak_order_figures(data)
         return html.Div([
             dcc.Graph(figure=hour_fig),
@@ -157,21 +114,32 @@ def render_content(tab):
             dcc.Graph(figure=month_fig)
         ])
 
-# Callback to update forecast content
+# Update forecast plot with hover info (EOQ, Safety Stock, ROP included)
 @app.callback(Output("forecast-content", "children"), Input("stockcode-dropdown", "value"))
 def forecast_content(selected_stockcode):
-    return update_forecast(selected_stockcode, data)
+    forecast_fig = update_forecast(selected_stockcode, data)
+    
+    # If `forecast_fig` is a message (e.g., error or no data)
+    if isinstance(forecast_fig, str):
+        return html.Div(forecast_fig)
+    else:
+        # Display forecast figure in a graph component
+        return dcc.Graph(figure=forecast_fig)
 
-# Callback to update insights content
+# Update insights content based on selected category
 @app.callback(
     Output("insights-content", "children"),
     Input("category-dropdown", "value")
 )
 def update_insights_content(selected_category):
-    elasticity_fig, demand_fig, table_fig = generate_insights_figures(data2, selected_category)
+    # Generate figures based on the selected category
+    elasticity_fig, demand_fig, competition_fig, table_fig = generate_insights_figures(data2, selected_category)
+    
+    # Return the generated figures as Graph components
     return [
         dcc.Graph(figure=elasticity_fig),
         dcc.Graph(figure=demand_fig),
+        dcc.Graph(figure=competition_fig),
         dcc.Graph(figure=table_fig)
     ]
 
@@ -181,4 +149,4 @@ def open_browser():
 
 if __name__ == "__main__":
     threading.Timer(1, open_browser).run()
-    app.run_server(debug=True, host = '0.0.0.0')
+    app.run_server(debug=True)
