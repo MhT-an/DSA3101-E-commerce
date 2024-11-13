@@ -7,6 +7,7 @@ import webbrowser
 import requests
 import certifi
 from io import StringIO
+from ucimlrepo import fetch_ucirepo
 
 from data_utils import load_data, get_stockcode_options, update_forecast, generate_peak_order_figures, load_and_process_data, generate_insights_figures
 
@@ -25,14 +26,14 @@ def data_loader(gd_link):
     data = pd.read_csv(csv_raw)
     return data
 
-conversion_funnel = data_loader('https://drive.google.com/file/d/1LUuFUO_tcMaedCUkD1yu2LnI8qNoUrty/view?usp=sharing')
-channel_conversion_rate = data_loader('https://drive.google.com/file/d/1Qb-sEYHh88WTyIT_vls4vioCuAXt-Vm0/view?usp=sharing')
+channel_conversion_rate = data_loader('https://drive.google.com/file/d/1H708cwxwYSl4FrYdxOiU6wUJQ3U4xr3W/view?usp=sharing')
+conversion_funnel = data_loader('https://drive.google.com/file/d/1hUIjB77ZUI_Vmn4lKyCEilfS6WkLNRRr/view?usp=sharing')
 data = load_data()
 data2 = load_and_process_data()
 
 # Function to process data for churn rate
 def load_churn_data():
-    online_retail = pd.read_csv('online_retail.csv')
+    online_retail = fetch_ucirepo(id=352).data.original
     online_retail['InvoiceDate'] = pd.to_datetime(online_retail['InvoiceDate'])
     online_retail['Country'] = online_retail['Country'].fillna('Unknown')
     
@@ -124,6 +125,7 @@ def render_content(tab):
         return html.Div([dcc.Graph(figure=funnel_graph)])
 
     elif tab == "tab-2":
+        channel_conversion_rate['main_category'] = channel_conversion_rate['main_category'].fillna('Other')
         fig = px.sunburst(
             channel_conversion_rate,
             path=['channel', 'main_category'],
@@ -179,4 +181,4 @@ def open_browser():
 
 if __name__ == "__main__":
     threading.Timer(1, open_browser).run()
-    app.run_server(debug=True)
+    app.run_server(debug=True, host = '0.0.0.0')
