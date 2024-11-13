@@ -13,4 +13,4 @@ COPY /src /app/
 
 EXPOSE 8050
 
-CMD ["python", "draft_app.py"]
+CMD ["python", "app.py"]
