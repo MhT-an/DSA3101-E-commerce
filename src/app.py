@@ -149,4 +149,4 @@ def open_browser():
 
 if __name__ == "__main__":
     threading.Timer(1, open_browser).run()
-    app.run_server(debug=True)
+    app.run_server(debug=True, host = '0.0.0.0')
