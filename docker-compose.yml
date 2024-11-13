@@ -11,13 +11,19 @@ services:
       - data:/data                   ### csv go here
       - ./requirements.txt:/query/requirements.txt
       - ./.env:/query/.env
-    command: >
-      bash -c 'python scripts/app_data.py & python scripts/cust_behaviour_loader.py & 
-        python scripts/kaggle_data.py & python scripts/subgrp_a_q3_data.py &
-        python scripts/subgrp_a_q3b_data.py & python scripts/uci_data.py'
+    healthcheck:
+      test: ["CMD", "test", "-f", "/shared-data/.ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     deploy:
       restart_policy:
-        condition: none
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    entrypoint: ["./entrypoint.sh"]
 
     
 

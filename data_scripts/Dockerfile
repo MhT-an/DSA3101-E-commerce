@@ -11,9 +11,14 @@ WORKDIR /query
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Copy all Python scripts from /Data into the container
-COPY . /query/data_scripts
+# Copy your scripts
+COPY . .
 
 # Set up a directory for output data
 RUN mkdir -p /data
+
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
+
 
