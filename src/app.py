@@ -102,9 +102,9 @@ def render_content(tab):
     elif tab == "tab-4":
         category_options = [{'label': cat, 'value': cat} for cat in data2['Category'].unique() if pd.notnull(cat)]
         return html.Div([
-            dcc.Dropdown(id="category-dropdown", options=category_options, placeholder="Select a Category"),
+            dcc.Dropdown(id="category-dropdown", options=category_options, placeholder="Select a Category", style={'width': '300px', 'margin': '0 auto'}),
             html.Div(id="insights-content")
-        ])
+        ], style={'paddingTop': '0px', 'marginTop': '0px'})
     
     elif tab == "tab-5":
         hour_fig, day_fig, month_fig = generate_peak_order_figures(data)
