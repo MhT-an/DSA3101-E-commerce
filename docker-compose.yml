@@ -13,8 +13,8 @@ services:
       - ./.env:/query/.env
     command: >
       bash -c 'python scripts/app_data.py & python scripts/cust_behaviour_loader.py & 
-        python scripts/kaggle_data.py & python scripts/subgrp_a_q3_data.py 
-        & python scripts/subgrp_a_q3b_data.py & python scripts/uci_data.py'
+        python scripts/kaggle_data.py & python scripts/subgrp_a_q3_data.py &
+        python scripts/subgrp_a_q3b_data.py & python scripts/uci_data.py'
     deploy:
       restart_policy:
         condition: none
