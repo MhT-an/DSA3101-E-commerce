@@ -4,39 +4,26 @@ services:
   query-service:
     build:
       context: .
-      dockerfile: Data/Dockerfile
-    working_dir: /app
+      dockerfile: ./data_scripts/Dockerfile
+    working_dir: /query
     volumes:
-      - ./Data:/app/Data           ### Python scripts go here
+      - ./data_scripts:/query/scripts           ### Python scripts go here
       - data:/data                   ### csv go here
-      - ./Data/requirements.txt:/app/requirements.txt
+      - ./requirements.txt:/app/requirements.txt
     command: >
-      bash -c 'cd Data/ && python app_data.py & python cust_behaviour_loader.py & 
-        kaggle_data.py & python subgrp_a_q3_data.py & python subgrp_a_q3b_data.py & python uci_data.py'
-    healthcheck:
-      test: >
-        bash -c "
-          FILE_COUNT=$(ls /data | wc -l);
-          if [ $FILE_COUNT -eq 21 ]; then
-            echo 'All files written';
-            exit 0;
-          else
-            echo 'Waiting for all files to be written';
-            sleep 30;
-          fi
-          done
-        "
-      interval: 30s     # Check every 30 seconds
-      timeout: 10s      # Timeout for each check
-      retries: 5        # Retry 5 times before marking as unhealthy
-      start_period: 30s # Wait 30 seconds before the first check
+      bash -c 'python scripts/app_data.py & python scripts/cust_behaviour_loader.py & 
+        python scripts/kaggle_data.py & python scripts/subgrp_a_q3_data.py 
+        & python scripts/subgrp_a_q3b_data.py & python scripts/uci_data.py'
+    deploy:
+      restart_policy:
+        condition: none
 
     
 
   notebook-runner:
     build:
       context: .       
-      dockerfile: Notebooks/Dockerfile
+      dockerfile: ./Notebooks/Dockerfile
     volumes:
       - data:/data
       - ./Notebooks:/project
@@ -47,8 +34,8 @@ services:
       find /project/Subgroup_A /project/Subgroup_B -type f -name "*.ipynb" 
       -exec jupyter nbconvert --to notebook --execute --inplace {} \;
     depends_on:
-      query-service:
-        condition: service_healthy
+      - query-service
+    profiles: ["post-query"]
 
   src-service:
     build:
@@ -62,12 +49,12 @@ services:
       - .env   
     environment:
       - PYTHONUNBUFFERED=1
+    depends_on:
+     - query-service
+    profiles: ["post-query"]
     ports:
       - "8050:8050"
     command: python app.py
-    depends_on:
-     query-service:
-        condition: service_healthy
 
 volumes:
   data:
