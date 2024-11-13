@@ -9,7 +9,7 @@ from data_utils import load_data, data_loader, get_stockcode_options, update_for
 
 # Load and prepare data
 channel_conversion_rate = data_loader('https://drive.google.com/file/d/1H708cwxwYSl4FrYdxOiU6wUJQ3U4xr3W/view?usp=sharing')
-channel_conversion_rate['main_category'] = channel_conversion_rate['main_category'].fillna('Other')
+channel_conversion_rate = channel_conversion_rate.dropna(subset=['total_conversions', 'channel', 'main_category'])
 conversion_funnel = data_loader('https://drive.google.com/file/d/1hUIjB77ZUI_Vmn4lKyCEilfS6WkLNRRr/view?usp=sharing')
 data = load_data()
 data2 = load_and_process_data()
