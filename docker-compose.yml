@@ -9,7 +9,8 @@ services:
     volumes:
       - ./data_scripts:/query/scripts           ### Python scripts go here
       - data:/data                   ### csv go here
-      - ./requirements.txt:/app/requirements.txt
+      - ./requirements.txt:/query/requirements.txt
+      - ./.env:/query/.env
     command: >
       bash -c 'python scripts/app_data.py & python scripts/cust_behaviour_loader.py & 
         python scripts/kaggle_data.py & python scripts/subgrp_a_q3_data.py 
