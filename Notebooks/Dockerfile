@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /project
 
 # Command to run all notebooks in Subgroup_A and Subgroup_B
-CMD ["/bin/bash", "-c", "/wait-for-data.sh && find ./Subgroup_A ./Subgroup_B -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute --inplace {} \;"]
+CMD ["/bin/bash", "-c", "find ./Subgroup_A ./Subgroup_B -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute --inplace {} \;"]
