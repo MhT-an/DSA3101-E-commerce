@@ -12,8 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /project
 
 # Command to run all notebooks in Subgroup_A and Subgroup_B
-SHELL ["/bin/bash", "-c"]
-CMD 'find ./Data_Cleaning -name "*.ipynb" -exec jupyter nbconvert \
+CMD /bin/bash -c 'find ./Data_Cleaning -name "*.ipynb" -exec jupyter nbconvert \
 --to notebook --execute --inplace "{}" ";" && \
 find ./Customer_Behavior_and_Sales_Analysis ./Inventory_Management_And_Pricing_Optimization \
 -type f -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute --inplace "{}" ";"'
