@@ -1,0 +1,12 @@
+scikit-learn==1.5.2
+dash==2.18.2
+jupyter==1.1.1
+nbconvert==7.16.4
+matplotlib-inline==0.1.7
+prophet==1.1.6
+scipy==1.14.1
+seaborn==0.13.2
+certifi==2024.8.30
+requests==2.32.3
+kaggle
+ucimlrepo
